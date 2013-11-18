@@ -10,7 +10,7 @@
 
 @interface NUTFontTableViewController ()
 @property (nonatomic, strong) NSArray *fonts;
-@property (nonatomic) CGFloat fontSize;
+@property (nonatomic) CGFloat pointSize;
 @end
 
 @implementation NUTFontTableViewController
@@ -20,8 +20,8 @@
     self = [super initWithCoder:decoder];
     if (self) {
 
-        // init fontSize
-        [self setFontSizeForCategory];
+        // init pointSize
+        [self setpointSizeForCategory];
 
         NSMutableArray *fonts = [NSMutableArray array];
         NSArray *familyNames = [UIFont familyNames];
@@ -30,9 +30,9 @@
             NSArray *fontNames = [UIFont fontNamesForFamilyName:familyName];
             for (NSString *fontName in fontNames)
             {
-                UIFont *font = [UIFont fontWithName:fontName size:self.fontSize];
+                UIFont *font = [UIFont fontWithName:fontName size:self.pointSize];
                 [fonts addObject:font];
-                NSLog(@"%@", font.fontName);
+//              NSLog(@"%@", font.fontName);
             }
         }
 
@@ -47,8 +47,6 @@
 {
     [super viewDidLoad];
 
-    self.tableView.separatorColor = [UIColor clearColor];
-
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(contentSizeCategoryDidChange)
                                                  name:UIContentSizeCategoryDidChangeNotification
@@ -56,43 +54,40 @@
     [self.tableView reloadData];
 }
 
-- (void)viewDidUnload
+- (void)dealloc
 {
 	[[NSNotificationCenter defaultCenter] removeObserver:self];
 }
 
 - (void)contentSizeCategoryDidChange
 {
-    [self setFontSizeForCategory];
+    [self setpointSizeForCategory];
 	[self.tableView reloadData];
 }
 
-- (void)setFontSizeForCategory
+- (void)setpointSizeForCategory
 {
     // see http://johnszumski.com/blog/implementing-dynamic-type-on-ios7
 
-    CGFloat fontSize = 16.0;
     NSString *contentSize = [UIApplication sharedApplication].preferredContentSizeCategory;
     NSString *description;
-    
+
+    UIFont *templateFont = [UIFont preferredFontForTextStyle:UIFontTextStyleBody];
+    self.pointSize = templateFont.pointSize;
+
     if ([contentSize rangeOfString:@"Accessibility"].location != NSNotFound)
     {
         // TODO: these font sizes are guesses
         // Accessibility Content Size Category Constants
         if ([contentSize isEqualToString:UIContentSizeCategoryAccessibilityMedium]) {
-            fontSize = 24.0;
             description = @"Accessibility Medium";
         } else if ([contentSize isEqualToString:UIContentSizeCategoryAccessibilityLarge]) {
-            fontSize = 26.0;
             description = @"Accessibility Large";
         } else if ([contentSize isEqualToString:UIContentSizeCategoryAccessibilityExtraLarge]) {
-            fontSize = 28.0;
             description = @"Accessibility Extra Large";
         } else if ([contentSize isEqualToString:UIContentSizeCategoryAccessibilityExtraExtraLarge]) {
-            fontSize = 30.0;
             description = @"Accessibility 2X Large";
         } else if ([contentSize isEqualToString:UIContentSizeCategoryAccessibilityExtraExtraExtraLarge]) {
-            fontSize = 32.0;
             description = @"Accessibility 3X Large";
         }
         else {
@@ -103,25 +98,18 @@
     {
         //Content Size Category Constants
         if ([contentSize isEqualToString:UIContentSizeCategoryExtraSmall]) {
-            fontSize = 12.0;
             description = @"Extra Small";
         } else if ([contentSize isEqualToString:UIContentSizeCategorySmall]) {
-            fontSize = 14.0;
             description = @"Small";
         } else if ([contentSize isEqualToString:UIContentSizeCategoryMedium]) {
-            fontSize = 16.0;
             description = @"Medium";
         } else if ([contentSize isEqualToString:UIContentSizeCategoryLarge]) {
-            fontSize = 18.0;
             description = @"Large";
         } else if ([contentSize isEqualToString:UIContentSizeCategoryExtraLarge]) {
-            fontSize = 20.0;
             description = @"Extra Large";
         } else if ([contentSize isEqualToString:UIContentSizeCategoryExtraExtraLarge]) {
-            fontSize = 22.0;
             description = @"Extra Extra Large";
         } else if ([contentSize isEqualToString:UIContentSizeCategoryExtraExtraExtraLarge]) {
-            fontSize = 24.0;
             description = @"Extra Extra Extra Large";
         }
         else
@@ -130,9 +118,7 @@
         }
     }
 
-    self.fontSize = fontSize;
-
-    self.title = [NSString stringWithFormat:@"%@ (%0.f)", description, fontSize];
+    self.title = [NSString stringWithFormat:@"%@ (%0.f)", description, self.pointSize];
 }
 
 #pragma mark - Table view data source
@@ -147,15 +133,36 @@
     return self.fonts.count;
 }
 
+- (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    // why yes, every font *could* have a different height
+    UIFont *font = self.fonts[indexPath.row];
+
+    // surprise!
+    font = [font fontWithSize:self.pointSize];
+
+    CGFloat height = font.leading * 1.5;
+
+    if (height < 30) {
+        // we may want to touch these some day
+        // but 44 is ridiculous
+        height = 30;
+    }
+
+    height = lroundf(height);
+    return height;
+}
+
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
     static NSString *CellIdentifier = @"Cell";
     UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier forIndexPath:indexPath];
     
     UIFont *font = self.fonts[indexPath.row];
-    font = [font fontWithSize:self.fontSize]; // maybe changed
+    font = [font fontWithSize:self.pointSize]; // maybe changed
     cell.textLabel.font = font;
     cell.textLabel.text = [self formatFontName:font.fontName];
+//  cell.detailTextLabel.text = font.fontName;
     return cell;
 }
 
