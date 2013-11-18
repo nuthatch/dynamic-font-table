@@ -161,7 +161,15 @@
     UIFont *font = self.fonts[indexPath.row];
     font = [font fontWithSize:self.pointSize]; // maybe changed
     cell.textLabel.font = font;
-    cell.textLabel.text = [self formatFontName:font.fontName];
+    if ([font.fontName isEqualToString:@"AppleColorEmoji"])
+    {
+        // https://twitter.com/SteveStreza/status/392758417233678336/photo/1
+        cell.textLabel.text = @"👻";
+    }
+    else
+    {
+        cell.textLabel.text = [self formatFontName:font.fontName];
+    }
 //  cell.detailTextLabel.text = font.fontName;
     return cell;
 }
