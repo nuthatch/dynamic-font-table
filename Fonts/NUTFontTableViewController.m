@@ -32,7 +32,7 @@
             {
                 UIFont *font = [UIFont fontWithName:fontName size:self.pointSize];
                 [fonts addObject:font];
-//              NSLog(@"%@", font.fontName);
+//              NSLog(@"\n%@", font.fontName);
             }
         }
 
